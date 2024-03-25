@@ -64,7 +64,6 @@ const registerUser = asyncHandler(async (req, res) => {
       sendVerifyMail(req.body.name, req.body.email, user._id);
       res.status(201).json({
         message: "User registered successfully",
-        token: generateToken(user._id),
       });
     } else {
       res.send(400);
@@ -118,4 +117,21 @@ const verifyUser = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { registerUser, authUser, verifyUser };
+const allUsers = asyncHandler(async (req, res) => {
+  const keyword = req.query.search
+    ? {
+        $or: [
+          { name: { $regex: req.query.search, $options: "i" } },
+          { email: { $regex: req.query.search, $options: "i" } },
+        ],
+      }
+    : {};
+  const users = await User.find({
+    ...keyword,
+    _id: { $ne: req.user.id },
+    isVerified: true,
+  }).select("-password");
+  res.send(users);
+});
+
+module.exports = { registerUser, authUser, verifyUser, allUsers };
