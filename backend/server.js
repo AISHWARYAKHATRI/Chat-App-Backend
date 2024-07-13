@@ -27,4 +27,22 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, console.log(`Server started on Port ${PORT}`.yellow.bold));
+const server = app.listen(
+  PORT,
+  console.log(`Server started on Port ${PORT}`.yellow.bold)
+);
+
+const io = require("socket.io")(server, {
+  pingTimeout: 60000,
+  cors: {
+    origin: "http://localhost:3000",
+  },
+});
+
+// Listens for new connections from the client. The callback is executed for each new connection, representing a socket obj representing the connection
+io.on("connection", (socket) => {
+  socket.on("setup", (userData) => {
+    socket.join(userData._id);
+    socket.emit("connected", { userData, received: true });
+  });
+});
